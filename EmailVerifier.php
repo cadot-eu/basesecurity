@@ -9,13 +9,15 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
+use Flasher\Prime\FlasherInterface;
 
 class EmailVerifier
 {
     public function __construct(
         private VerifyEmailHelperInterface $verifyEmailHelper,
         private MailerInterface $mailer,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private FlasherInterface $flasher
     ) {
     }
 
@@ -34,8 +36,14 @@ class EmailVerifier
         $context['expiresAtMessageData'] = $signatureComponents->getExpirationMessageData();
 
         $email->context($context);
-
-        $this->mailer->send($email);
+        try {
+            $this->mailer->send($email);
+           $this->flasher->addFlash('success','Votre message a bien été envoyé');
+        } catch (TransportExceptionInterface $e) {
+            $this->flasher->addFlash('error','Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
+            captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
+            throw new \Exception($e);
+        }
     }
 
     /**
