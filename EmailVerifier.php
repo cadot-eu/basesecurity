@@ -38,7 +38,6 @@ class EmailVerifier
         $email->context($context);
         try {
             $this->mailer->send($email);
-           $this->flasher->addFlash('success','Votre message a bien été envoyé');
         } catch (TransportExceptionInterface $e) {
             $this->flasher->addFlash('error','Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
             captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
